@@ -1,9 +1,8 @@
-extends ResourceFormatSaver
-class_name ResourceFormatSaverJSONInputProfile
+class_name ResourceFormatSaverJSONInputProfile extends ResourceFormatSaver
 
 func get_recognized_extensions(resource: Resource)->PoolStringArray:
 	if resource is InputProfile:
-		return PoolStringArray([".json"])
+		return PoolStringArray(["inputprofile"])
 	return PoolStringArray()
 
 func recognize(resource: Resource)->bool:

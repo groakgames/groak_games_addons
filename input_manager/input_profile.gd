@@ -1,5 +1,4 @@
-extends Resource
-class_name InputProfile
+class_name InputProfile extends Resource
 
 
 const _INPUT_SIGNAL_PREFIX = "INPUT_SIGNAL_"

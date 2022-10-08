@@ -1,6 +1,6 @@
 tool
-extends ResourceFormatLoader
-class_name ResourceFormatLoaderJSONInputProfile
+class_name ResourceFormatLoaderJSONInputProfile extends ResourceFormatLoader
+
 
 # @todo	 remove these comments
 
@@ -17,7 +17,7 @@ class_name ResourceFormatLoaderJSONInputProfile
 
 
 func get_recognized_extensions()->PoolStringArray:
-	return PoolStringArray(["json"])
+	return PoolStringArray(["inputprofile"])
 
 func handles_type(typename: String)->bool:
 	return typename == "InputProfile"

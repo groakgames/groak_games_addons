@@ -1,5 +1,4 @@
-extends InputAction
-class_name InputActionScalar
+class_name InputActionScalar extends InputAction
 
 
 export(Array, InputEvent) var _inputs := []

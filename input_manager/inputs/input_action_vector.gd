@@ -1,5 +1,4 @@
-extends InputAction
-class_name InputActionVector
+class_name InputActionVector extends InputAction
 
 # some composite component along side normal vector inputs
 

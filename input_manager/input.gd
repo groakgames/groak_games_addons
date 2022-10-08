@@ -1,14 +1,16 @@
 extends Node
-
-# AutoLoad InputManager
-
-# @todo remove
-const TEST_INPUT_ACTION = preload("res://test_input_action.tres")
+# AutoLoad GGInput
 
 enum {
 	DEVICE_KEYBOARD = -3
 	DEVICE_MOUSE = -2
-	DEVICE_EMULATED_TOUCH_MOUSE = -1
+	DEVICE_EMULATED_TOUCH_MOUSE = -1 # emulated mouse input from touch screen
+}
+
+const NON_JOYPAD_DEVICE_NAMES = {
+	DEVICE_KEYBOARD: "keyboard",
+	DEVICE_MOUSE: "mouse",
+	DEVICE_EMULATED_TOUCH_MOUSE: "emulated touch mouse"
 }
 
 var profile_map := {}
@@ -108,10 +110,16 @@ func load_saved_profiles()->void:
 			file_name = dir.get_next()
 		dir.list_dir_end()
 
+static func get_non_joypad_devices()->PoolIntArray:
+	var rv := PoolIntArray()
+	if OS.has_touchscreen_ui_hint():
+		rv.append(DEVICE_EMULATED_TOUCH_MOUSE)
+	rv.append(DEVICE_MOUSE)
+	rv.append(DEVICE_KEYBOARD)
+	return rv
+
+
 func _input(event:InputEvent):
-	# if event is InputEventJoypadButton:
-	# 	print((TEST_INPUT_ACTION._inputs[0] as InputEvent).shortcut_match(event, true))
-	# return
 	var players
 	if event.device or event is InputEventJoypadMotion or event is InputEventJoypadButton:
 		players = _device_to_player_map.get(event.device, [])
