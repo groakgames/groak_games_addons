@@ -55,6 +55,12 @@ func delete_player(input_player_id)->bool:
 		return _players.erase(input_player_id)
 	return false
 
+func get_player_devices(player_id)->PoolIntArray:
+	var player: InputPlayer = _players.get(player_id)
+	if player:
+		return PoolIntArray(player.claimed_devices)
+	return PoolIntArray()
+
 func claim_device(input_player_id, device:int)->bool:
 	var player: InputPlayer = _players.get(input_player_id)
 	if player:
@@ -65,6 +71,7 @@ func claim_device(input_player_id, device:int)->bool:
 		if not _device_to_player_map.has(device):
 			_device_to_player_map[device] = device_list
 		device_list.append(player)
+		return true
 	return false
 
 func unclaim_device(input_player_id, device:int)->bool:
