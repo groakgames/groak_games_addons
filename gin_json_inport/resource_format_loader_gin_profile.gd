@@ -1,5 +1,5 @@
 tool
-class_name ResourceFormatLoaderJSONInputProfile extends ResourceFormatLoader
+#class_name ResourceFormatLoaderGinProfile extends ResourceFormatLoader
 
 
 # @todo	 remove these comments

@@ -1,4 +1,4 @@
-class_name ResourceFormatSaverJSONInputProfile extends ResourceFormatSaver
+#class_name ResourceFormatSaverGinProfile extends ResourceFormatSaver
 
 func get_recognized_extensions(resource: Resource)->PoolStringArray:
 	if resource is GinProfile:

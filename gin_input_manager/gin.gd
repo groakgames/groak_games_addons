@@ -1,6 +1,10 @@
 extends Node
 # AutoLoad Gin
 
+
+## Gin Input Manager
+
+
 enum {
 	DEVICE_MIDI = -4
 	DEVICE_KEYBOARD = -3
@@ -20,6 +24,8 @@ const MIDI_ENABLED_PLATFORMS := PoolStringArray(["X11", "OSX", "Windows"])
 
 signal device_connection_changed(gg_device_id, connected)
 
+signal profile_loaded(profile)
+signal profile_unloaded(profile)
 
 var profile_directory: String = "user://input_profiles"
 var default_profile: GinProfile
@@ -116,6 +122,41 @@ func get_player_devices(player_id)->PoolIntArray:
 	return PoolIntArray()
 
 
+func get_profile(name:String)->GinProfile:
+	return _profile_map.get(name)
+
+
+func get_profile_names()->PoolStringArray:
+	return PoolStringArray(_profile_map.keys())
+
+## Gets loaded profiles
+func get_profiles()->Array:
+	return _profile_map.values()
+
+
+## returns Error
+## OK: success
+## ERR_ALREADY_EXISTS: profile with given name already exists
+## ERR_FILE_UNRECOGNIZED: profile could not be loaded
+func load_profile_path(profile_path:String)->int:
+	var profile: GinProfile = load(profile_path) as GinProfile
+	if profile:
+		return load_profile(profile)
+	return ERR_FILE_UNRECOGNIZED
+
+
+## returns Error
+## OK: success
+## ERR_DOES_NOT_EXIST: profile passed in is null
+## ERR_ALREADY_EXISTS: profile with given name already exists
+func load_profile(profile:GinProfile)->int:
+	if not profile: return ERR_DOES_NOT_EXIST
+	elif profile.resource_name in _profile_map: return ERR_ALREADY_EXISTS
+	_profile_map[profile.resource_name] = profile
+	emit_signal("profile_loaded", profile)
+	return OK
+
+
 func load_saved_profiles()->void:
 	var dir := Directory.new()
 	if dir.open(profile_directory) == OK:
@@ -164,6 +205,15 @@ func unclaim_device(input_player_id, gg_device_id:int)->bool:
 		_device_to_player_map[gg_device_id].erase(player)
 		return true
 	return false
+
+
+func unload_profile(name:String)->int:
+	var profile: GinProfile = _profile_map.get(name)
+	if profile:
+		emit_signal("profile_unloaded", profile)
+		_profile_map.erase(name)
+		return OK
+	return ERR_DOES_NOT_EXIST
 
 
 #
@@ -215,7 +265,6 @@ func _input(event:InputEvent)->void:
 
 func _on_joy_connection_changed(gg_device_id:int, connected:bool)->void:
 	emit_signal("device_connection_changed", gg_device_id, connected)
-
 
 
 class InputPlayer:
