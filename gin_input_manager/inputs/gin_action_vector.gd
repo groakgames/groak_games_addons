@@ -1,4 +1,4 @@
-class_name InputActionVector extends InputAction
+class_name GinActionVector extends GinAction
 
 # some composite component along side normal vector inputs
 

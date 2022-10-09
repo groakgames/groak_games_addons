@@ -1,4 +1,4 @@
-class_name InputProfile extends Resource
+class_name GinProfile extends Resource
 
 
 const _INPUT_SIGNAL_PREFIX = "INPUT_SIGNAL_"
@@ -12,7 +12,7 @@ enum {
 }
 
 export(Array, Resource) var _actions: Array
-# Dictionary(InputEvent,Array(InputActionData))
+# Dictionary(InputEvent,Array(GinActionData))
 var _input_event_map: Dictionary
 var _initialized := false
 
@@ -41,37 +41,37 @@ func _create_input_event_map()->void:
 	for action in _actions:
 		print("signal added! ", _INPUT_SIGNAL_PREFIX+action.resource_name)
 		add_user_signal(_INPUT_SIGNAL_PREFIX+action.resource_name)
-		if action is InputActionScalar:
+		if action is GinActionScalar:
 			for input in action._inputs:
 				var data_list: Array =_input_event_map.get(input, [])
 				if not _input_event_map.has(input):
 					_input_event_map[input] = data_list
-				var data := InputActionData.new()
+				var data := GinActionData.new()
 				data.action = action
 				data_list.append(data)
-		elif action is InputActionVector:
+		elif action is GinActionVector:
 			var composite_input_arrays: Array = action.get_composite_input_arrays()
 			for composite_direction in composite_input_arrays.size():
 				for input in composite_input_arrays[composite_direction]:
 					var data_list: Array =_input_event_map.get(input, [])
 					if not _input_event_map.has(input):
 						_input_event_map[input] = data_list
-					var data := InputActionCompositeData.new()
+					var data := GinActionCompositeData.new()
 					data.composite_direction = composite_direction
 					data.action = action
 					data_list.append(data)
 
-class InputActionData:
+class GinActionData:
 	extends Reference
-	var action:InputActionScalar
+	var action:GinActionScalar
 	func process_input(event:InputEvent):
 
 		pass
 
 
-class InputActionCompositeData:
+class GinActionCompositeData:
 	extends Reference
-	var action:InputActionVector
+	var action:GinActionVector
 
 	var composite_direction := COMPOSITE_LEFT
 	func process_input(event:InputEvent):

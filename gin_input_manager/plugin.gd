@@ -2,14 +2,14 @@ tool
 extends EditorPlugin
 
 const CUSTOM_TYPES: Array = [
-	["InputProfile",      "Resource", preload("input_profile.gd"),              null],
-	["InputAction",       "Resource", preload("inputs/input_action.gd"),        null],
-	["InputActionScalar", "Resource", preload("inputs/input_action_scalar.gd"), null],
-	["InputActionVector", "Resource", preload("inputs/input_action_vector.gd"), null],
+	["GinProfile",    "Resource", preload("input_profile.gd"),            null],
+	["GinAction",       "Resource", preload("inputs/gin_action.gd"),        null],
+	["GinActionScalar", "Resource", preload("inputs/gin_action_scalar.gd"), null],
+	["GinActionVector", "Resource", preload("inputs/gin_action_vector.gd"), null],
 ]
 
 const CUSTOM_AUTOLOADS: Array = [
-	PoolStringArray(["GGInput", "/input.gd"])
+	PoolStringArray(["Gin", "/gin.gd"])
 ]
 
 func _enter_tree()->void:

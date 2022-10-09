@@ -1,4 +1,4 @@
-class_name InputAction extends Resource
+class_name GinAction extends Resource
 
 var prev_value
 

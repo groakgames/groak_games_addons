@@ -1,19 +1,19 @@
 class_name ResourceFormatSaverJSONInputProfile extends ResourceFormatSaver
 
 func get_recognized_extensions(resource: Resource)->PoolStringArray:
-	if resource is InputProfile:
+	if resource is GinProfile:
 		return PoolStringArray(["inputprofile"])
 	return PoolStringArray()
 
 func recognize(resource: Resource)->bool:
-	return resource is InputProfile
+	return resource is GinProfile
 
 func save(path: String, resource: Resource, flags: int)->int:
 	if not recognize(resource):
 		return ERR_INVALID_DATA
 	var action_dicts := []
 	for action in resource._actions:
-		if action is InputActionScalar:
+		if action is GinActionScalar:
 			var input_dicts := []
 			for ie in action._inputs:
 				input_dicts.append(_convert_input_event_to_simple_dict(ie))
@@ -23,7 +23,7 @@ func save(path: String, resource: Resource, flags: int)->int:
 				"name": action.resource_name,
 				"inputs": input_dicts
 			})
-		elif action is InputActionVector:
+		elif action is GinActionVector:
 			var left_input_dicts := []
 			for ie in action._left_inputs:
 				left_input_dicts.append(_convert_input_event_to_simple_dict(ie))

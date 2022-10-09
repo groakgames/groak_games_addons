@@ -1,4 +1,4 @@
-class_name InputActionScalar extends InputAction
+class_name GinActionScalar extends GinAction
 
 
 export(Array, InputEvent) var _inputs := []

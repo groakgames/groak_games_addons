@@ -8,10 +8,10 @@ func get_visible_name():
 		return "Special Mesh"
 
 func get_recognized_extensions():
-		return ["inputprofile", "json"]
+		return ["ginprofile", "json"]
 
 func get_save_extension():
-		return "inputprofile"
+		return "ginprofile"
 
 func get_resource_type():
 		return "Resource"

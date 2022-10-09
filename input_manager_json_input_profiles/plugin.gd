@@ -13,16 +13,16 @@ var json_import_plugin: EditorImportPlugin
 
 func _enter_tree()->void:
 	var local_path: String = (get_script() as Script).resource_path.get_base_dir()
-	
+
 	# Remove plugins
 	json_import_plugin = preload("editor_import_plugins/input_profile_import_plugin.gd").new()
 #	add_import_plugin(json_import_plugin)
-	
+
 	# Add Custom Types
 	for type_info in CUSTOM_TYPES:
 		callv("add_custom_type", type_info)
-		
-	
+
+
 
 
 func _exit_tree()->void:
@@ -35,8 +35,8 @@ func _exit_tree()->void:
 	# Remove Custom Types
 	for type_info in CUSTOM_TYPES:
 		remove_custom_type(type_info[0])
-		
-	
+
+
 
 
 func add_custom_type(type:String, base:String, script:Script, icon:Texture)->void:

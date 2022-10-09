@@ -1,5 +1,5 @@
 extends Node
-# AutoLoad GGInput
+# AutoLoad Gin
 
 enum {
 	DEVICE_MIDI = -4
@@ -22,7 +22,7 @@ signal device_connection_changed(gg_device_id, connected)
 
 
 var profile_directory: String = "user://input_profiles"
-var default_profile: InputProfile
+var default_profile: GinProfile
 
 
 func claim_device(input_player_id, device:int)->bool:
@@ -55,7 +55,7 @@ func connect_unhandled_input(player_id, action:String, target:Object, method:Str
 
 
 # returns false if player has been created with given id
-func create_player(id, input_profile: InputProfile = null, devices: PoolIntArray = [])->bool:
+func create_player(id, input_profile: GinProfile = null, devices: PoolIntArray = [])->bool:
 	if _players.has(id):
 		return false
 	if input_profile:
@@ -123,7 +123,7 @@ func load_saved_profiles()->void:
 		var file_name := dir.get_next()
 		while file_name:
 			if not dir.current_is_dir():
-				var profile: InputProfile = ResourceLoader.load(dir.get_current_dir() + "/" + file_name, "InputProfile", true)
+				var profile: GinProfile = ResourceLoader.load(dir.get_current_dir() + "/" + file_name, "", true)
 				if profile:
 					_profile_map[profile.resource_name] = profile
 			file_name = dir.get_next()
@@ -147,7 +147,7 @@ func set_midi_enabled(enabled:bool)->void:
 		emit_signal("device_connection_chanaged", DEVICE_MIDI, enabled)
 
 
-func set_player_profile(input_player_id, profile:InputProfile)->bool:
+func set_player_profile(input_player_id, profile:GinProfile)->bool:
 	var player: InputPlayer = _players.get(input_player_id)
 	if player:
 		player.profile = profile

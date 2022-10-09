@@ -37,22 +37,22 @@ func load(path: String, original_path: String):
 	if typeof(json_result.result) != TYPE_DICTIONARY:
 		return ERR_FILE_UNRECOGNIZED
 
-	var input_profile := InputProfile.new()
+	var input_profile := GinProfile.new()
 	var raw_dict: Dictionary = json_result.result
 	match raw_dict:
 		{"name": var profile_name, "actions": [..]}:
 			input_profile.resource_name = profile_name
 			for raw_action in raw_dict.actions:
 				if "type" in raw_action: raw_action.type = raw_action.type.to_upper()
-				var action: InputAction
+				var action: GinAction
 				match raw_action:
 					{"type": "SCALAR", "name": var action_name, "inputs": [..]}:
-						action = InputActionScalar.new()
+						action = GinActionScalar.new()
 						action.resource_name = action_name
 						for ie in raw_action.inputs:
 							action._inputs.append(_convert_simple_dict_to_input_event(ie))
 					{"type": "VECTOR", "name": var action_name, "left_inputs": [..], "up_inputs": [..], "right_inputs": [..], "down_inputs": [..], "native_inputs": [..]}:
-						action = InputActionVector.new()
+						action = GinActionVector.new()
 						action.resource_name = action_name
 						for field in ["left_inputs", "up_inputs", "right_inputs", "down_inputs"]:
 							for ie in raw_action.get(field):
