@@ -2,10 +2,10 @@ tool
 extends EditorPlugin
 
 const CUSTOM_TYPES: Array = [
-	["GinProfile",    "Resource", preload("input_profile.gd"),            null],
-	["GinAction",       "Resource", preload("inputs/gin_action.gd"),        null],
-	["GinActionScalar", "Resource", preload("inputs/gin_action_scalar.gd"), null],
-	["GinActionVector", "Resource", preload("inputs/gin_action_vector.gd"), null],
+	["GinProfile",      "Resource", preload("gin_profile.gd"),               null],
+	["GinAction",       "Resource", preload("actions/gin_action.gd"),        null],
+	["GinActionScalar", "Resource", preload("actions/gin_action_scalar.gd"), null],
+	["GinActionVector", "Resource", preload("actions/gin_action_vector.gd"), null],
 ]
 
 const CUSTOM_AUTOLOADS: Array = [
