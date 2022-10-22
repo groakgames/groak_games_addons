@@ -47,6 +47,10 @@ enum {
 	MASK_MOD_ALL   = MASK_MOD_CMD | MASK_MOD_META | MASK_MOD_SHIFT | MASK_MOD_ALT | MASK_MOD_FORCE
 	MASK_MOD_ALL_BUT_FORCE = MASK_MOD_ALL & ~MASK_MOD_FORCE
 
+	IE_INT_NATIVE_BIT_START = 48,
+	BIT_IS_ABSOLUTE = IE_INT_NATIVE_BIT_START,
+	MASK_IS_ABSOLUTE = 1 << BIT_IS_ABSOLUTE,
+
 	IE_INT_TYPE_START = 56,
 	MASK_TYPE = 0x0f << IE_INT_TYPE_START
 }
@@ -61,16 +65,18 @@ const NON_JOYPAD_DEVICE_NAMES := {
 enum INPUT_EVENT_ID {
 	_MODIFIERS_START         = 0
 	InputEventKey            = 0
+	_NATIVE_START            = 1 << IE_INT_TYPE_START
 	InputEventMagnifyGesture = 1 << IE_INT_TYPE_START
 	InputEventPanGesture     = 2 << IE_INT_TYPE_START
 	InputEventMouseButton    = 3 << IE_INT_TYPE_START
 	InputEventMouseMotion    = 4 << IE_INT_TYPE_START
 	_MODIFIERS_END           = 4 << IE_INT_TYPE_START
-	InputEventJoypadButton   = 5 << IE_INT_TYPE_START
-	InputEventJoypadMotion   = 6 << IE_INT_TYPE_START
-	InputEventMIDI           = 7 << IE_INT_TYPE_START
-	InputEventScreenDrag     = 8 << IE_INT_TYPE_START
-	InputEventScreenTouch    = 9 << IE_INT_TYPE_START
+	InputEventScreenDrag     = 5 << IE_INT_TYPE_START
+	InputEventScreenTouch    = 6 << IE_INT_TYPE_START
+	_NATIVE_END              = 6 << IE_INT_TYPE_START
+	InputEventJoypadButton   = 7 << IE_INT_TYPE_START
+	InputEventJoypadMotion   = 8 << IE_INT_TYPE_START
+	InputEventMIDI           = 9 << IE_INT_TYPE_START
 }
 
 const INPUT_EVENT_ID_STRING = PoolStringArray([
@@ -79,11 +85,11 @@ const INPUT_EVENT_ID_STRING = PoolStringArray([
 	"Pan",
 	"MouseButton",
 	"MouseMotion",
+	"Drag",
+	"Touch",
 	"JoypadButton",
 	"JoypadMotion",
 	"MIDI",
-	"Drag",
-	"Touch"
 ])
 
 const INPUT_EVENT_ID_STRING_CAPS = PoolStringArray([
@@ -92,11 +98,11 @@ const INPUT_EVENT_ID_STRING_CAPS = PoolStringArray([
 	"PAN",
 	"MOUSEBUTTON",
 	"MOUSEMOTION",
+	"DRAG",
+	"TOUCH",
 	"JOYPADBUTTON",
 	"JOYPADMOTION",
 	"MIDI",
-	"DRAG",
-	"TOUCH"
 ])
 
 const MOUSE_BUTTON_STRING = PoolStringArray([
@@ -328,6 +334,9 @@ static func input_int_to_dict(ie:int)->Dictionary:
 		if not (ie & MASK_MOD_ALL_BUT_FORCE) and (ie & MASK_MOD_FORCE):
 			rv.no_mods = true
 
+	if type >= INPUT_EVENT_ID._NATIVE_START and type <= INPUT_EVENT_ID._NATIVE_END:
+		rv.is_absolute = bool(ie & MASK_IS_ABSOLUTE)
+
 	if type == INPUT_EVENT_ID.InputEventKey:
 		rv.key = OS.get_scancode_string(ie & MASK_DATA)
 	elif type == INPUT_EVENT_ID.InputEventJoypadButton:
@@ -345,6 +354,8 @@ static func dict_to_input_int(ie:Dictionary)->int:
 	if typeof(raw_type) != TYPE_STRING:
 		return 0
 	var type: int = INPUT_EVENT_ID_STRING_CAPS.find(raw_type.to_upper())
+	if raw_type.to_upper() == "MOUSEMOTION":
+		pass
 	if type == -1:
 		return 0
 	type <<= IE_INT_TYPE_START
@@ -361,6 +372,14 @@ static func dict_to_input_int(ie:Dictionary)->int:
 			return 0
 		var mods: int = (int(alt) << BIT_MOD_ALT) | (int(shift) << BIT_MOD_SHIFT) | (int(meta) << BIT_MOD_META) | (int(cmd or ctrl) << BIT_MOD_CMD)
 		rv |= mods | (int(no_mods or mods) << BIT_MOD_FORCE)
+
+	if type >= INPUT_EVENT_ID._NATIVE_START and type <= INPUT_EVENT_ID._NATIVE_END:
+		var is_absolute = ie.get("is_absolute", false)
+		if not typeof(is_absolute) == TYPE_BOOL:
+			return 0
+		elif is_absolute:
+			rv |= MASK_IS_ABSOLUTE
+
 	if type == INPUT_EVENT_ID.InputEventKey:
 		var key = ie.get("key")
 		if typeof(key) == TYPE_STRING:

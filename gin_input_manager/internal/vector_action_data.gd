@@ -13,6 +13,11 @@ func init(action:GinActionVector, player, profile)->void:
 		_input_direction_map[i] = GinAction.VECTOR_INPUT_TYPE.LEFT
 	for i in action.right_inputs:
 		_input_direction_map[i] = GinAction.VECTOR_INPUT_TYPE.RIGHT
+	for i in action.native_inputs:
+		if i & Gin.MASK_IS_ABSOLUTE:
+			_input_direction_map[i] = GinAction.VECTOR_INPUT_TYPE.ABSOLUTE
+		else:
+			_input_direction_map[i] = GinAction.VECTOR_INPUT_TYPE.RELATIVE
 
 
 func get_inputs()->Array:
