@@ -20,12 +20,35 @@ const VECTOR_SIGNAL_ARGS =[
 ]
 
 enum {
-	DEVICE_INVALID = -5
-	DEVICE_MIDI = -4
-	DEVICE_KEYBOARD = -3
-	DEVICE_MOUSE = -2
-	DEVICE_TOUCH = -1 # Any touch input, gestures, emulated mouse, input from touch screen
-	DEVICE_JOYPAD_START = 0
+	DEVICE_INVALID = -5,
+	DEVICE_MIDI = -4,
+	DEVICE_KEYBOARD = -3,
+	DEVICE_MOUSE = -2,
+	DEVICE_TOUCH = -1, # Any touch input, gestures, emulated mouse, input from touch screen
+	DEVICE_JOYPAD_START = 0,
+
+	IE_INT_TYPE_SIZE = 4,
+
+
+	MASK_DATA = (1<<32)-1,
+
+
+	IE_INT_MODIFIER_BIT_START = 48,
+	BIT_MOD_FORCE = IE_INT_MODIFIER_BIT_START,
+	BIT_MOD_CMD,
+	BIT_MOD_META,
+	BIT_MOD_SHIFT,
+	BIT_MOD_ALT,
+	MASK_MOD_FORCE = 1 << BIT_MOD_FORCE,
+	MASK_MOD_CMD   = 1 << BIT_MOD_CMD,
+	MASK_MOD_META  = 1 << BIT_MOD_META,
+	MASK_MOD_SHIFT = 1 << BIT_MOD_SHIFT,
+	MASK_MOD_ALT   = 1 << BIT_MOD_ALT,
+	MASK_MOD_ALL   = MASK_MOD_CMD | MASK_MOD_META | MASK_MOD_SHIFT | MASK_MOD_ALT | MASK_MOD_FORCE
+	MASK_MOD_ALL_BUT_FORCE = MASK_MOD_ALL & ~MASK_MOD_FORCE
+
+	IE_INT_TYPE_START = 56,
+	MASK_TYPE = 0x0f << IE_INT_TYPE_START
 }
 
 const NON_JOYPAD_DEVICE_NAMES := {
@@ -36,18 +59,18 @@ const NON_JOYPAD_DEVICE_NAMES := {
 }
 
 enum INPUT_EVENT_ID {
-	_MODIFIERS_START = 0
+	_MODIFIERS_START         = 0
 	InputEventKey            = 0
-	InputEventMagnifyGesture = 1 << 59
-	InputEventPanGesture     = 2 << 59
-	InputEventMouseButton    = 3 << 59
-	InputEventMouseMotion    = 4 << 59
-	_MODIFIERS_END           = 4 << 59
-	InputEventJoypadButton   = 5 << 59
-	InputEventJoypadMotion   = 6 << 59
-	InputEventMIDI           = 7 << 59
-	InputEventScreenDrag     = 8 << 59
-	InputEventScreenTouch    = 9 << 59
+	InputEventMagnifyGesture = 1 << IE_INT_TYPE_START
+	InputEventPanGesture     = 2 << IE_INT_TYPE_START
+	InputEventMouseButton    = 3 << IE_INT_TYPE_START
+	InputEventMouseMotion    = 4 << IE_INT_TYPE_START
+	_MODIFIERS_END           = 4 << IE_INT_TYPE_START
+	InputEventJoypadButton   = 5 << IE_INT_TYPE_START
+	InputEventJoypadMotion   = 6 << IE_INT_TYPE_START
+	InputEventMIDI           = 7 << IE_INT_TYPE_START
+	InputEventScreenDrag     = 8 << IE_INT_TYPE_START
+	InputEventScreenTouch    = 9 << IE_INT_TYPE_START
 }
 
 const INPUT_EVENT_ID_STRING = PoolStringArray([
@@ -104,12 +127,13 @@ func create_player(player_id, devices:PoolIntArray=[], profile:GinProfile=null)-
 	_players[player_id] = player
 	if devices.size() > 0:
 		for d in devices:
-			#warning-ignore:return_value_discarded
 			claim_device(player_id, d)
+
 	if profile:
 		set_profile(player_id, profile)
 	elif default_profile:
 		set_profile(player_id, default_profile)
+
 	return true
 
 
@@ -146,7 +170,7 @@ func connect_input(player_id, action: String, target: Object, method:String, bin
 
 func connect_input_unhandled(player_id, action: String, target: Object, method:String, binds: Array = [], flags: int = 0)->int:
 	var player_data: PlayerData = _players.get(player_id)
-	if player_data:
+	if player_data and player_data.unhandled_signal_obj.has_user_signal(action):
 		return player_data.unhandled_signal_obj.connect(action, target, method, binds, flags)
 	return ERR_DOES_NOT_EXIST
 
@@ -254,7 +278,7 @@ func unload_profile(name:String)->void:
 func unclaim_device(player_id, gin_device_id:int)->void:
 	var player_data: PlayerData = _players.get(player_id)
 	if player_data:
-		var ps = _device_player_map.get(gin_device_id)
+		var ps: Array = _device_player_map.get(gin_device_id)
 		if ps != null:
 			ps.erase(player_data)
 			var devices := player_data.claimed_devices
@@ -263,50 +287,55 @@ func unclaim_device(player_id, gin_device_id:int)->void:
 			for action in player_data.actions:
 				action.clear_cache()
 
-static func input_event_int(ie:InputEvent)->int:
-	if ie is InputEventKey:
-		return INPUT_EVENT_ID.InputEventKey | (((int(ie.alt) << 4) | (int(ie.shift) << 3) | (int(ie.control) << 2) | (int(ie.meta) << 1) | int(ie.command)) << 54) | ie.scancode
+
+static func input_event_int(ie:InputEvent, force_mods:= false)->int:
+	if ie is InputEventWithModifiers:
+		var mods: int = (int(ie.alt) << BIT_MOD_ALT) | (int(ie.shift) << BIT_MOD_SHIFT) | (int(ie.meta) << BIT_MOD_META) | (int(ie.command) << BIT_MOD_CMD)
+		mods |= int(force_mods or mods) << BIT_MOD_FORCE
+		if ie is InputEventKey:
+			return INPUT_EVENT_ID.InputEventKey | mods | ie.scancode
+		elif ie is InputEventMouseButton:
+			return INPUT_EVENT_ID.InputEventMouseButton | mods | ie.button_index
+		elif ie is InputEventMouseMotion:
+			return INPUT_EVENT_ID.InputEventMouseMotion | mods
+		elif ie is InputEventMagnifyGesture:
+			return INPUT_EVENT_ID.InputEventMagnifyGesture | mods
+		elif ie is InputEventPanGesture:
+			return INPUT_EVENT_ID.InputEventPanGesture | mods
+		else:
+			return 0
 	elif ie is InputEventJoypadButton:
 		return INPUT_EVENT_ID.InputEventJoypadButton | ie.button_index
 	elif ie is InputEventJoypadMotion:
 		return INPUT_EVENT_ID.InputEventJoypadMotion | ie.axis
-	elif ie is InputEventMouseButton:
-		return INPUT_EVENT_ID.InputEventMouseButton | ie.button_index | (((int(ie.alt) << 4) | (int(ie.shift) << 3) | (int(ie.control) << 2) | (int(ie.meta) << 1) | int(ie.command)) << 54)
-	elif ie is InputEventMouseMotion:
-		return INPUT_EVENT_ID.InputEventMouseMotion | (((int(ie.alt) << 4) | (int(ie.shift) << 3) | (int(ie.control) << 2) | (int(ie.meta) << 1) | int(ie.command)) << 54)
-	elif ie is InputEventMagnifyGesture:
-		return INPUT_EVENT_ID.InputEventMagnifyGesture |  (((int(ie.alt) << 4) | (int(ie.shift) << 3) | (int(ie.control) << 2) | (int(ie.meta) << 1) | int(ie.command)) << 54)
-	elif ie is InputEventPanGesture:
-		return INPUT_EVENT_ID.InputEventPanGesture | (((int(ie.alt) << 4) | (int(ie.shift) << 3) | (int(ie.control) << 2) | (int(ie.meta) << 1) | int(ie.command)) << 54)
 	else:
 		return INPUT_EVENT_ID.get(ie.get_class(), 0)
 
 
 static func input_int_to_dict(ie:int)->Dictionary:
-	var type: int = ie & (0x0f << 59)
-	var rv := {type=INPUT_EVENT_ID_STRING[min(type >> 59, 9)]}
+	var type: int = ie & MASK_TYPE
+	var rv := {type=INPUT_EVENT_ID_STRING[min(type >> IE_INT_TYPE_START, 9)]}
 	# ie with modifiers
-	if type >= INPUT_EVENT_ID._MODIFIERS_START and type <= INPUT_EVENT_ID._MODIFIERS_START:
-		var modifiers: int = (ie >> 54) & 0x1f
-		if modifiers & (0x10):
+	if type >= INPUT_EVENT_ID._MODIFIERS_START and type <= INPUT_EVENT_ID._MODIFIERS_END:
+		if ie & MASK_MOD_ALT:
 			rv.alt = true
-		if modifiers & (0x08):
+		if ie & MASK_MOD_SHIFT:
 			rv.shift = true
-		if modifiers & (0x04):
-			rv.ctrl = true
-		if modifiers & (0x02):
+		if ie & MASK_MOD_META:
 			rv.meta = true
-		if modifiers & (0x01):
+		if ie & MASK_MOD_CMD:
 			rv.cmd = true
+		if not (ie & MASK_MOD_ALL_BUT_FORCE) and (ie & MASK_MOD_FORCE):
+			rv.no_mods = true
 
 	if type == INPUT_EVENT_ID.InputEventKey:
-		rv.key = OS.get_scancode_string(ie & ((1<<32)-1))
+		rv.key = OS.get_scancode_string(ie & MASK_DATA)
 	elif type == INPUT_EVENT_ID.InputEventJoypadButton:
-		rv.button =  Input.get_joy_button_string(ie & ((1<<32)-1))
+		rv.button =  Input.get_joy_button_string(ie & MASK_DATA)
 	elif type == INPUT_EVENT_ID.InputEventJoypadMotion:
-		rv.axis = Input.get_joy_axis_string(ie & ((1<<32)-1))
+		rv.axis = Input.get_joy_axis_string(ie & MASK_DATA)
 	elif type == INPUT_EVENT_ID.InputEventMouseButton:
-		rv.button = MOUSE_BUTTON_STRING[min(ie & ((1<<4)-1),8)]
+		rv.button = MOUSE_BUTTON_STRING[min(ie & MASK_DATA, 8)]
 	return rv
 
 
@@ -318,19 +347,20 @@ static func dict_to_input_int(ie:Dictionary)->int:
 	var type: int = INPUT_EVENT_ID_STRING_CAPS.find(raw_type.to_upper())
 	if type == -1:
 		return 0
-	type <<= 59
+	type <<= IE_INT_TYPE_START
 	rv |= type
 
-	if type >= INPUT_EVENT_ID._MODIFIERS_START and type <= INPUT_EVENT_ID._MODIFIERS_START:
+	if type >= INPUT_EVENT_ID._MODIFIERS_START and type <= INPUT_EVENT_ID._MODIFIERS_END:
 		var alt   = ie.get("alt",   false)
 		var shift = ie.get("shift", false)
 		var ctrl  = ie.get("ctrl",  false)
 		var meta  = ie.get("meta",  false)
 		var cmd   = ie.get("cmd",   false)
-		if not (typeof(alt) == TYPE_BOOL and typeof(shift) == TYPE_BOOL and typeof(ctrl) == TYPE_BOOL and typeof(meta) == TYPE_BOOL and typeof(cmd) == TYPE_BOOL):
+		var no_mods = ie.get("no_mods", false)
+		if not (typeof(alt) == TYPE_BOOL and typeof(shift) == TYPE_BOOL and typeof(ctrl) == TYPE_BOOL and typeof(meta) == TYPE_BOOL and typeof(cmd) == TYPE_BOOL and typeof(no_mods) == TYPE_BOOL):
 			return 0
-		rv |= ((int(alt) << 4) | (int(shift) <<  3) | (int(ctrl) <<  2) | (int(meta) <<  1) | (int(cmd))) << 54
-
+		var mods: int = (int(alt) << BIT_MOD_ALT) | (int(shift) << BIT_MOD_SHIFT) | (int(meta) << BIT_MOD_META) | (int(cmd or ctrl) << BIT_MOD_CMD)
+		rv |= mods | (int(no_mods or mods) << BIT_MOD_FORCE)
 	if type == INPUT_EVENT_ID.InputEventKey:
 		var key = ie.get("key")
 		if typeof(key) == TYPE_STRING:
@@ -371,26 +401,56 @@ static func dict_to_input_int(ie:Dictionary)->int:
 	return rv
 
 
+static func set_modifiers(ie_int:int, flags:int)->int:
+	return ie_int & (((flags&0x1f) << IE_INT_MODIFIER_BIT_START) | ~(0x1f << IE_INT_MODIFIER_BIT_START))
+
+
 var _players:Dictionary # Dictionary<Variant,PlayerData>
 var _profiles:Dictionary # (String, Profile)
 var _midi_enabled: bool
 # mapping of event_int -> array of actions
 var _device_player_map:Dictionary # (int, Array[PlayerData])
 
+
 func _input(event:InputEvent)->void:
-	for player_data in _device_player_map.get(_device_id_from_event(event), []):
-		for act in player_data.action_links.get(Gin.input_event_int(event), []):
-			act.parse_input(event, false)
+	_input_helper(event, false)
 
 
 func _unhandled_input(event:InputEvent)->void:
-	for player_data in _device_player_map.get(_device_id_from_event(event), []):
-		for act in player_data.action_links.get(Gin.input_event_int(event), []):
-			act.parse_input(event, true)
+	_input_helper(event, true)
+
+
+func _input_helper(event:InputEvent, is_unhandled:bool)->void:
+	var ie_int: int = input_event_int(event)
+	var dev_id: int = _device_id_from_event(event)
+	for player_data in _device_player_map.get(dev_id, []):
+		for act in player_data.action_links.get(ie_int, []):
+			act.parse_input(ie_int, event, is_unhandled)
+
+	if event is InputEventWithModifiers:
+		if not(ie_int & MASK_MOD_ALL_BUT_FORCE) or not event.is_pressed():
+			var i: int = (ie_int & ~MASK_MOD_ALL) | MASK_MOD_FORCE
+			for player_data in _device_player_map.get(dev_id, []):
+				for act in player_data.action_links.get(i, []):
+					act.parse_input(i, event, is_unhandled)
+
+		if ie_int & MASK_MOD_ALL_BUT_FORCE:
+			ie_int &= ~MASK_MOD_ALL
+			for player_data in _device_player_map.get(dev_id, []):
+				for act in player_data.action_links.get(ie_int, []):
+					act.parse_input(ie_int, event, is_unhandled)
+
 
 
 func _on_joy_connection_changed(gg_device_id:int, connected:bool)->void:
 	emit_signal("device_connection_changed", gg_device_id, connected)
+
+
+func _notification(what:int)->void:
+	if what == NOTIFICATION_WM_MOUSE_EXIT:
+		for player in _players.values():
+			for action in player.actions:
+				action.clear_cache()
 
 
 static func _device_id_from_event(event:InputEvent)->int:
@@ -414,8 +474,8 @@ class PlayerData:
 	var profile: GinProfile
 	var actions: Array
 	var action_links: Dictionary # (int, Array[Action])
-	var handled_signal_obj: Reference
-	var unhandled_signal_obj: Reference
+	var handled_signal_obj: Reference = Reference.new()
+	var unhandled_signal_obj: Reference = Reference.new()
 
 	func connect_input(is_unhandled:bool, action:String, target:Object, method:String, binds:Array, flags:int = 0)->int:
 		if is_unhandled:

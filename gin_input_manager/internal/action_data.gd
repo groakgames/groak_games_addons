@@ -14,7 +14,7 @@ func get_inputs()->Array:
 	assert(false, "Unimplemented get_inputs")
 	return []
 
-func parse_input(event:InputEvent, is_unhandled_input:bool)->void:
+func parse_input(event_id:int, event:InputEvent, is_unhandled_input:bool)->void:
 	assert(false, "Unimplemented parse_input")
 
 var _player

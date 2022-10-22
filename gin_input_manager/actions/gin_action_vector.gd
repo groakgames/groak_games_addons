@@ -15,8 +15,8 @@ var right_inputs: Array
 var native_inputs: Array
 
 
-func add_input_event(input_event:InputEvent, type:int)->bool:
-	var input_int: int = Gin.input_event_int(input_event)
+func add_input_event(input_event:InputEvent, type:int, no_mods:bool=false)->bool:
+	var input_int: int = Gin.input_event_int(input_event, no_mods)
 	if (input_int in forward_inputs) or (input_int in back_inputs) or (input_int in left_inputs) or (input_int in right_inputs) or (input_int in native_inputs):
 		return false
 	match type:

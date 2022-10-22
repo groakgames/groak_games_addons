@@ -23,7 +23,7 @@ func init(action:GinActionScalar, player, profile)->void:
 	_inputs.sort()
 
 
-func parse_input(event:InputEvent, is_unhandled_input:bool)->void:
+func parse_input(event_id:int, event:InputEvent, is_unhandled_input:bool)->void:
 	var prev_values: Dictionary
 	var stack: Array
 	if is_unhandled_input:
@@ -32,22 +32,21 @@ func parse_input(event:InputEvent, is_unhandled_input:bool)->void:
 	else:
 		prev_values = _prev_values
 		stack = _stack
-	var ie_int: int = Gin.input_event_int(event)
 	if event is InputEventJoypadButton:
 		if event.pressed:
-			if prev_values.get(ie_int, 0.0) != 0.0:
-				stack.erase([ie_int, prev_values[ie_int]])
+			if prev_values.get(event_id, 0.0) != 0.0:
+				stack.erase([event_id, prev_values[event_id]])
 			var value: float = event.pressure if event.pressure != 0.0 else 1.0
-			stack.push_back([ie_int, value])
-			prev_values[ie_int] = value
-		elif prev_values.has(ie_int):
-			stack.erase(prev_values[ie_int])
-			prev_values[ie_int] = 0.0
+			stack.push_back([event_id, value])
+			prev_values[event_id] = value
+		elif prev_values.has(event_id):
+			stack.erase(prev_values[event_id])
+			prev_values[event_id] = 0.0
 	if event is InputEventKey or event is InputEventMouseButton or event is InputEventScreenTouch:
 		if event.pressed:
-			stack.push_back([ie_int, 1.0])
+			stack.push_back([event_id, 1.0])
 		else:
-			stack.erase([ie_int, 1.0])
+			stack.erase([event_id, 1.0])
 	else:
 		return
 

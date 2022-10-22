@@ -30,10 +30,10 @@ func clear_cache()->void:
 	_player.unhandled_signal_obj.emit_signal(name, Vector2.ZERO, null, false)
 
 
-func parse_input(event:InputEvent, is_unhandled_input:bool)->void:
-	var ie_int: int = Gin.input_event_int(event)
-	var direction = _input_direction_map.get(ie_int, null)
+func parse_input(event_id:int, event:InputEvent, is_unhandled_input:bool)->void:
+	var direction = _input_direction_map.get(event_id)
 	if direction == null: return
+
 	var direction_stack:Array
 	var prev_values:Dictionary
 	if is_unhandled_input:
@@ -50,30 +50,32 @@ func parse_input(event:InputEvent, is_unhandled_input:bool)->void:
 	if direction < GinAction.VECTOR_INPUT_TYPE.NATIVE_INPUT_START:
 		if event is InputEventJoypadMotion:
 			if abs(event.axis_value) > _deadzone:
-				if prev_values.get(ie_int, 0.0) != 0.0:
-					direction_stack.erase([ie_int, prev_values[ie_int]])
+				if prev_values.get(event_id, 0.0) != 0.0:
+					direction_stack.erase([event_id, prev_values[event_id]])
 				var value: float = event.axis_value*dir_coef
-				direction_stack.push_back([ie_int, value])
-				prev_values[ie_int] = value
-			elif prev_values.has(ie_int):
-				direction_stack.erase([ie_int, prev_values[ie_int]])
-				prev_values[ie_int] = 0.0
+				direction_stack.push_back([event_id, value])
+				prev_values[event_id] = value
+			elif prev_values.has(event_id):
+				direction_stack.erase([event_id, prev_values[event_id]])
+				prev_values[event_id] = 0.0
 		elif event is InputEventJoypadButton:
 			if event.pressed:
-				if prev_values.get(ie_int, 0.0) != 0.0:
-					direction_stack.erase([ie_int, prev_values[ie_int]])
+				if prev_values.get(event_id, 0.0) != 0.0:
+					direction_stack.erase([event_id, prev_values[event_id]])
 				var value: float = event.pressure if event.pressure != 0.0 else 1.0
-				direction_stack.push_back([ie_int, value])
-				prev_values[ie_int] = value
-			elif prev_values.has(ie_int):
-				direction_stack.erase(prev_values[ie_int])
-				prev_values[ie_int] = 0.0
+				direction_stack.push_back([event_id, value])
+				prev_values[event_id] = value
+			elif prev_values.has(event_id):
+				direction_stack.erase(prev_values[event_id])
+				prev_values[event_id] = 0.0
 		elif event is InputEventKey or event is InputEventMouseButton or event is InputEventScreenTouch:
-			print("pressed: ", event.pressed)
+
 			if event.pressed:
-				direction_stack.push_back([ie_int, dir_coef])
+				direction_stack.push_back([event_id, dir_coef])
 			else:
-				direction_stack.erase([ie_int, dir_coef])
+				if event.alt or event.shift or event.control or event.meta or event.command:
+					direction_stack.erase([Gin.set_modifiers(event_id, 0), dir_coef])
+				direction_stack.erase([event_id, dir_coef])
 		else:
 			return
 		if is_unhandled_input:
