@@ -2,10 +2,10 @@
 extends EditorPlugin
 
 const CUSTOM_TYPES: Array = [
-	["GinProfile",      "Resource", preload("gin_profile.gd"),               null],
-	["GinAction",       "Resource", preload("actions/gin_action.gd"),        null],
-	["GinActionScalar", "Resource", preload("actions/gin_action_scalar.gd"), null],
-	["GinActionVector", "Resource", preload("actions/gin_action_vector.gd"), null],
+	["GinProfile",      "Resource", "/gin_profile.gd",               null],
+	["GinAction",       "Resource", "/actions/gin_action.gd",        null],
+	["GinActionScalar", "Resource", "/actions/gin_action_scalar.gd", null],
+	["GinActionVector", "Resource", "/actions/gin_action_vector.gd", null],
 ]
 
 const CUSTOM_AUTOLOADS: Array = [
@@ -21,7 +21,7 @@ func _enter_tree()->void:
 
 	# Add Custom Types
 	for type_info in CUSTOM_TYPES:
-		callv("add_custom_type", type_info)
+		add_custom_type(type_info[0], type_info[1], load(local_path+type_info[2]), type_info[3])
 
 
 func _exit_tree()->void:

@@ -293,7 +293,7 @@ func set_profile(player_id, profile:GinProfile)->void:
 			action_data = ScalarActionData.new()
 			player.handled_signal_obj.add_user_signal(action.resource_name, SCALAR_SIGNAL_ARGS)
 			player.unhandled_signal_obj.add_user_signal(action.resource_name, SCALAR_SIGNAL_ARGS)
-		if action is GinActionVector:
+		elif action is GinActionVector:
 			action_data = VectorActionData.new()
 			player.handled_signal_obj.add_user_signal(action.resource_name, VECTOR_SIGNAL_ARGS)
 			player.unhandled_signal_obj.add_user_signal(action.resource_name, VECTOR_SIGNAL_ARGS)
