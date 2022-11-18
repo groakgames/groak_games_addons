@@ -106,6 +106,7 @@ const INPUT_EVENT_ID_STRING_CAPS: PackedStringArray = [
 ]
 
 const MOUSE_BUTTON_STRING: PackedStringArray = [
+	"",
 	"left",
 	"right",
 	"middle",
@@ -448,12 +449,13 @@ static func dict_to_input_int(ie:Dictionary)->int:
 	elif type == INPUT_EVENT_ID.InputEventMouseButton:
 		var raw_button = ie.get("button")
 		if typeof(raw_button) == TYPE_STRING:
+			raw_button = raw_button.to_lower()
 			var button := MOUSE_BUTTON_STRING.find(raw_button)
-			if button > 0:
-				rv |= MOUSE_BUTTON_STRING.find(raw_button)
+			if button >= 0:
+				rv |= button
 			else:
 				return 0
-		if typeof(raw_button) == TYPE_INT:
+		elif typeof(raw_button) == TYPE_INT:
 			rv |= raw_button
 		else:
 			return 0
@@ -515,7 +517,7 @@ func _on_joy_connection_changed(gg_device_id:int, connected:bool)->void:
 
 
 func _notification(what:int)->void:
-	if what == NOTIFICATION_WM_MOUSE_EXIT:
+	if what == NOTIFICATION_WM_MOUSE_EXIT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
 		for player in _players.values():
 			for action in player.actions:
 				action.clear_cache()

@@ -42,10 +42,10 @@ func parse_input(event_id:int, event:InputEvent, is_unhandled_input:bool)->void:
 	var direction_stack:Array
 	var prev_values:Dictionary
 	if is_unhandled_input:
-		direction_stack = _ys if direction == GinAction.VECTOR_INPUT_TYPE.UP or direction == GinAction.VECTOR_INPUT_TYPE.DOWN else _xs
+		direction_stack = _uys if direction == GinAction.VECTOR_INPUT_TYPE.UP or direction == GinAction.VECTOR_INPUT_TYPE.DOWN else _uxs
 		prev_values = _uprev_values
 	else:
-		direction_stack = _uys if direction == GinAction.VECTOR_INPUT_TYPE.UP or direction == GinAction.VECTOR_INPUT_TYPE.DOWN else _uxs
+		direction_stack = _ys if direction == GinAction.VECTOR_INPUT_TYPE.UP or direction == GinAction.VECTOR_INPUT_TYPE.DOWN else _xs
 		prev_values = _prev_values
 
 	var dir_coef: int = int(direction == GinAction.VECTOR_INPUT_TYPE.RIGHT or direction == GinAction.VECTOR_INPUT_TYPE.DOWN)*2-1
